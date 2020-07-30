@@ -11,12 +11,12 @@ Scatter-gather method can reduce the BQSR time from ~10h to ~50min.
 
 The directory tree:
 
-~/data
-├── BasicResource
-│   ├── GATK_bundle
-│   │   └── hg38_scatter_interval_files
-│   └── Ref
-├── cmds
-│   └── pbs_out
-└── Data
-    ├── 0_bwa_bam
+    ~/data
+    ├── BasicResource
+    │   ├── GATK_bundle
+    │   │   └── hg38_scatter_interval_files
+    │   └── Ref
+    ├── cmds
+    │   └── pbs_out
+    └── Data
+        ├── 0_bwa_bam
