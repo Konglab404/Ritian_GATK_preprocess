@@ -1,0 +1,58 @@
+#!/bin/bash 
+#PBS -o ~/data/cmds/pbs_out/test22_bqsr_scatter.o
+#PBS -e ~/data/cmds/pbs_out/test22_bqsr_scatter.e 
+#PBS -N test22_bqsr_scatter
+#PBS -q workq  
+#PBS -l mem=1000gb,walltime=15:00:00
+#PBS -l nodes=2:ppn=60
+
+for i in `seq -f '%04g' 0 19` #Calculate the recal table
+do
+    outfile=~/data/Data/0_bwa_bam/$filename_dedup_recal_data_$i.table  
+    gatk BaseRecalibrator -L ~/data/BasicResource/GATK_bundle/hg38_scatter_interval_files/$i-scattered.interval_list\ # for循环里面别这么换行，最好还是写成一行
+        -R ~/data/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
+        -I ~/data/Data/0_bwa_bam/$filename.dedup.bam \
+        --known-sites ~/data/BasicResource/GATK_bundle/Homo_sapiens_assembly38.dbsnp138.vcf \
+        --known-sites ~/data/BasicResource/GATK_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz \
+        -O $outfile &
+done
+wait
+
+for i in `seq -f '%04g' 0 19` #Apply the BQSR
+do
+    bqfile=~/data/Data/0_bwa_bam/$filename_dedup_recal_data_$i.table
+    output=~/data/Data/0_bwa_bam/$filename_dedup_recal_$i.bam
+    gatk ApplyBQSR -R ~/data/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
+        -I ~/data/Data/0_bwa_bam/$filename.dedup.bam \
+        -L ~/data/BasicResource/GATK_bundle/hg38_scatter_interval_files/$i-scattered.interval_list  \
+        -bqsr $bqfile \
+        --static-quantized-quals 10 --static-quantized-quals 20 --static-quantized-quals 30 \ # 量子化低质量碱基质量，极大省空间
+        -O $output &
+done
+wait
+
+gatk GatherBamFiles -O ~/data/Data/0_bwa_bam/$filename_dedup.BQSR.bam / #Gather bam files
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0000.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0001.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0002.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0003.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0004.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0005.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0006.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0007.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0008.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0009.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0010.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0011.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0012.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0013.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0014.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0015.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0016.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0017.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0018.bam /
+    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0019.bam 
+    
+#resort and re-index the gathered bam files
+samtools sort -@ 40 -m 6G -o ~/data/Data/0_bwa_bam/$filename.dedup.BQSR.sorted.bam ~/data/Data/0_bwa_bam/$filename_dedup.BQSR.bam 
+samtools index -@ 40 ~/data/Data/0_bwa_bam/$filename.dedup.BQSR.sorted.bam
