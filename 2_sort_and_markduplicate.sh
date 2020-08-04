@@ -3,7 +3,7 @@
 #PBS -e ~/data/cmds/pbs_out/sort_mdp.e 
 #PBS -N sort_mdp
 #PBS -q workq  
-#PBS -l mem=300gb,walltime=15:00:00 
+#PBS -l mem=250gb,walltime=15:00:00 
 #PBS -l nodes=1:ppn=40 
 
 samtools sort -@ 40 -m 4G -n -O bam -T test.tmp -o ~/data/Data/0_bwa_bam/$filename.sortedN.bam \ #In samtools, sort by names is required before fixmate
