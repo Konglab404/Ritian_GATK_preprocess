@@ -1,58 +1,67 @@
 #!/bin/bash 
-#PBS -o ~/data/cmds/pbs_out/test22_bqsr_scatter.o
-#PBS -e ~/data/cmds/pbs_out/test22_bqsr_scatter.e 
-#PBS -N test22_bqsr_scatter
+#PBS -o /data_group/kongqingpeng/wanghaotian/cmds/pbs_out/MuTect2_275.o
+#PBS -e /data_group/kongqingpeng/wanghaotian/cmds/pbs_out/MuTect2_275.e 
+#PBS -N Mutect2_275
 #PBS -q workq  
-#PBS -l mem=200gb,walltime=15:00:00
-#PBS -l nodes=1:ppn=40
+#PBS -l mem=150gb,walltime=25:00:00 
+#PBS -l nodes=1:ppn=20 
 
-for i in `seq -f '%04g' 0 19` #Calculate the recal table
+sample='sample275'
+
+#The scripts uses PoN file of 1000G as normal samples
+
+for i in `seq -f '%04g' 0 19`
 do
-    outfile=~/data/Data/0_bwa_bam/$filename_dedup_recal_data_$i.table  
-    gatk BaseRecalibrator -L ~/data/BasicResource/GATK_bundle/hg38_scatter_interval_files/$i-scattered.interval_list\ # for循环里面别这么换行，最好还是写成一行
-        -R ~/data/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
-        -I ~/data/Data/0_bwa_bam/$filename.dedup.bam \
-        --known-sites ~/data/BasicResource/GATK_bundle/Homo_sapiens_assembly38.dbsnp138.vcf \
-        --known-sites ~/data/BasicResource/GATK_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz \
-        -O $outfile &
+    gatk Mutect2 -R /data_group/kongqingpeng/wanghaotian/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta -I /data_group/kongqingpeng/wanghaotian/Data/0_bwa_bam/${sample}.dedup.BQSR.sorted.bam -tumor ${sample} -L /data_group/kongqingpeng/wanghaotian/BasicResource/GATK_bundle/hg38_scatter_interval_files/$i-scattered.interval_list --germline-resource /data_group/kongqingpeng/wanghaotian/BasicResource/GATK_bundle/af-only-gnomad.hg38.vcf.gz --af-of-alleles-not-in-resource 0.00003125 --panel-of-normals /data_group/kongqingpeng/wanghaotian/BasicResource/GATK_bundle/1000g_pon.hg38.vcf.gz -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.$i.vcf.gz &
 done
 wait
 
-for i in `seq -f '%04g' 0 19` #Apply the BQSR
-do
-    bqfile=~/data/Data/0_bwa_bam/$filename_dedup_recal_data_$i.table
-    output=~/data/Data/0_bwa_bam/$filename_dedup_recal_$i.bam
-    gatk ApplyBQSR -R ~/data/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
-        -I ~/data/Data/0_bwa_bam/$filename.dedup.bam \
-        -L ~/data/BasicResource/GATK_bundle/hg38_scatter_interval_files/$i-scattered.interval_list  \
-        -bqsr $bqfile \
-        --static-quantized-quals 10 --static-quantized-quals 20 --static-quantized-quals 30 \ # 量子化低质量碱基质量，极大省空间
-        -O $output &
-done
-wait
-
-gatk GatherBamFiles -O ~/data/Data/0_bwa_bam/$filename_dedup.BQSR.bam / #Gather bam files
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0000.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0001.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0002.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0003.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0004.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0005.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0006.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0007.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0008.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0009.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0010.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0011.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0012.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0013.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0014.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0015.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0016.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0017.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0018.bam /
-    -I ~/data/Data/0_bwa_bam/$filename_dedup_recal_0019.bam 
+gatk GatherVcfs -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0000.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0001.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0002.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0003.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0004.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0005.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0006.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0007.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0008.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0009.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0010.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0011.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0012.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0013.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0014.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0015.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0016.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0017.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0018.vcf.gz \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.0019.vcf.gz \
     
-#resort and re-index the gathered bam files
-samtools sort -@ 40 -m 6G -o ~/data/Data/0_bwa_bam/$filename.dedup.BQSR.sorted.bam ~/data/Data/0_bwa_bam/$filename_dedup.BQSR.bam 
-samtools index -@ 40 ~/data/Data/0_bwa_bam/$filename.dedup.BQSR.sorted.bam
+gatk SortVcf -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.vcf.gz \
+    -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.sorted.vcf.gz
+    
+rm /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}*00*
+
+
+
+#GetPileupSummaries
+gatk GetPileupSummaries \
+    -L /data_group/kongqingpeng/wanghaotian/BasicResource/GATK_bundle/chromosome_intervals.intervals\
+    -I /data_group/kongqingpeng/wanghaotian/Data/0_bwa_bam/${sample}.dedup.BQSR.sorted.bam \
+    -V /data_group/kongqingpeng/wanghaotian/BasicResource/GATK_bundle/af-only-gnomad.hg38.SNP_biallelic.vcf.gz \
+    -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.pileups.table
+    
+#
+gatk CalculateContamination \
+    -I /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.pileups.table \
+    -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_con.table 
+    
+gatk FilterMutectCalls \
+    -R /data_group/kongqingpeng/wanghaotian/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
+    -V /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.sorted.vcf.gz \
+    -contamination-table /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_con.table \
+    -O /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.filtered.vcf.gz
+    
+bcftools filter -Oz -o /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.filtered.PASS.vcf.gz \
+    -i 'FILTER=="PASS" & GERMQ>=30 & INFO/DP>=20' /data_group/kongqingpeng/wanghaotian/Data/1_vcfs/${sample}_somatic.filtered.vcf.gz
