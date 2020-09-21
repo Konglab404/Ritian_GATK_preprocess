@@ -1,3 +1,4 @@
+#!/bin/bash
 
 for i in `seq -f '%04g' 0 19`
 do
