@@ -9,7 +9,7 @@
 bwa mem -t 40 -R '@RG\tID:test22\tPL:ILLUMINA\tSM:test22' \
     ~/data/BasicResource/Ref/Homo_sapiens_assembly38_gatk.fasta \
     ~/data/Data/$filename_R1.fq.gz \
-    ~/data/Data/$filename_R1.fq.gz | samtools view -Sb - > ~/data/Data/0_bwa_bam/$filename.unsorted.bam #the file to output
+    ~/data/Data/$filename_R2.fq.gz | samtools view -Sb - > ~/data/Data/0_bwa_bam/$filename.unsorted.bam #the file to output
     
 #I add the PBS header to help the estimate of resource-consuming 
 # $filename should be change by yourself. For example, my fq files' names are GL11_R1.fq.gz/GL11_R2.fq.gz
